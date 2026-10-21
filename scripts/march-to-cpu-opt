@@ -311,6 +311,11 @@ def print_qemu_cpu():
         if ext in QEMU_SUPPORTED_EXTS:
             cpu_options.append("{0}=true".format(ext))
 
+    # Linux toolchains use -mno-strict-align. The rv64i base model traps
+    # those accesses unless Zicclsm is enabled explicitly.
+    if "zicclsm=true" not in cpu_options:
+        cpu_options.append("zicclsm=true")
+
     return ",".join(cpu_options)
 
 def print_spike_isa():
