@@ -211,16 +211,20 @@ AS_IF([test "x$enable_multilib" != xno || test "x$with_multilib_generator" != xn
 	[AC_SUBST(multilib_flags,--disable-multilib)])
 
 AS_IF([test "x$enable_multilib" != xno],
-        [AC_SUBST(glibc_multilib_names,"rv32imac-ilp32 rv32gc-ilp32d rv64imac-lp64 rv64gc-lp64d rv64gcv-lp64d")],
-        [AC_SUBST(glibc_multilib_names,"$with_arch-$with_abi")])
+      [AS_IF([test "x$with_vendor" = xgf],
+             [AC_SUBST(glibc_multilib_names,"rv64imac_zcb_zba_zbb_zbs-lp64 rv64imafdc_zcb_zba_zbb_zbs-lp64d")],
+             [AC_SUBST(glibc_multilib_names,"rv64imac-lp64 rv64gc-lp64d rv64gcv-lp64d")])],
+      [AC_SUBST(glibc_multilib_names,"$with_arch-$with_abi")])
 
 AS_IF([test "x$enable_multilib" != xno],
         [AC_SUBST(newlib_multilib_names,"rv32i-ilp32 rv32iac-ilp32 rv32im-ilp32 rv32imac-ilp32 rv32imafc-ilp32f rv64imac-lp64 rv64gc-lp64d")],
         [AC_SUBST(newlib_multilib_names,"$with_arch-$with_abi")])
 
 AS_IF([test "x$enable_multilib" != xno],
-        [AC_SUBST(musl_multilib_names,"rv32imac-ilp32 rv32gc-ilp32d rv64imac-lp64 rv64gc-lp64d")],
-        [AC_SUBST(musl_multilib_names,"$with_arch-$with_abi")])
+      [AS_IF([test "x$with_vendor" = xgf],
+             [AC_SUBST(musl_multilib_names,"rv64imac_zcb_zba_zbb_zbs-lp64 rv64imafdc_zcb_zba_zbb_zbs-lp64d")],
+             [AC_SUBST(musl_multilib_names,"rv64imac-lp64 rv64gc-lp64d")])],
+      [AC_SUBST(musl_multilib_names,"$with_arch-$with_abi")])
 
 AC_ARG_ENABLE(gcc-checking,
         [AS_HELP_STRING([--enable-gcc-checking],
@@ -395,8 +399,9 @@ AC_ARG_ENABLE(qemu_system,
 	[enable_qemu_system=no]
 	)
 
+# qemu-mips MIPSMTYPE fields are not valid for RV32 (shift overflow under -Werror).
 AS_IF([test "x$enable_qemu_system" != xno],
-	[AC_SUBST(qemu_targets, [riscv64-linux-user,riscv32-linux-user,riscv64-softmmu,riscv32-softmmu])],
-	[AC_SUBST(qemu_targets, [riscv64-linux-user,riscv32-linux-user])])
+	[AC_SUBST(qemu_targets, [riscv64-linux-user,riscv64-softmmu])],
+	[AC_SUBST(qemu_targets, [riscv64-linux-user])])
 
 AC_OUTPUT

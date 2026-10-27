@@ -518,7 +518,8 @@ else
 endif
 	$(eval $@_LIBDIRSUFFIX := $(if $($@_ABI),$(shell echo $($@_ARCH) | sed 's/.*rv\([0-9]*\).*/\1/')/$($@_ABI),))
 	$(eval $@_XLEN := $(if $($@_ABI),$(shell echo $($@_ARCH) | sed 's/.*rv\([0-9]*\).*/\1/'),$(XLEN)))
-	$(eval $@_CFLAGS := $(if $($@_ABI),-march=$($@_ARCH) -mabi=$($@_ABI),))
+	$(eval $@_MULTILIB_OPTS := $(if $($@_ABI),$(shell $(GLIBC_CC_FOR_TARGET) -print-multi-lib | grep -F ';@march=$($@_ARCH)@mabi=$($@_ABI)@' | cut -d';' -f2 | sed 's/@/ -/g'),))
+	$(eval $@_CFLAGS := $(if $($@_ABI),$(or $($@_MULTILIB_OPTS),-march=$($@_ARCH) -mabi=$($@_ABI)),))
 	$(eval $@_LIBDIROPTS := $(if $@_LIBDIRSUFFIX,--libdir=/usr/lib$($@_LIBDIRSUFFIX) libc_cv_slibdir=/lib$($@_LIBDIRSUFFIX) libc_cv_rtlddir=/lib,))
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
