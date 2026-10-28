@@ -1,10 +1,12 @@
 #!/bin/bash
 
 qemu_args=()
+mtune=""
 while [[ "$1" != "" ]]
 do
     case "$1" in
     -Wq,*) qemu_args+=("$(echo "$1" | cut -d, -f2-)");;
+    -Wmtune,*) mtune="${1#-Wmtune,}";;
     *) break;;
     esac
     shift
@@ -13,5 +15,28 @@ done
 xlen="$(march-to-cpu-opt --elf-file-path $1 --print-xlen)"
 qemu_cpu="$(march-to-cpu-opt --elf-file-path $1 --print-qemu-cpu)"
 
+# ABI from PT_INTERP (Linux glibc multilibs are RV64-only: lp64 / lp64d).
+interp="$(readelf -l $1 2>/dev/null | sed -n 's/.*Requesting program interpreter: \[\(.*\)\]/\1/p')"
+case "$interp" in
+    *lp64d*) abi=lp64d ;;
+    *lp64*)  abi=lp64 ;;
+    *)       abi=lp64d ;;
+esac
+
+cpu_dir=""
+case "$mtune" in
+    arc-v-rpx-100-series) cpu_dir="/lib64/${abi}/rpx100/medany" ;;
+    mips-i8500)           cpu_dir="/lib64/${abi}/i8500" ;;
+esac
+
+if [[ -n "${RISCV_LD_LIBRARY_PATH:-}" ]]; then
+    libpath="$RISCV_LD_LIBRARY_PATH"
+elif [[ -n "$cpu_dir" ]]; then
+    libpath="${cpu_dir}:/lib64/${abi}:/lib"
+else
+    libpath="/lib64/${abi}:/lib"
+fi
+
 QEMU_CPU="${qemu_cpu}" qemu-riscv${xlen} -r 5.10 "${qemu_args[@]}" \
+  -E "LD_LIBRARY_PATH=${libpath}" \
   -L ${RISC_V_SYSROOT} "$@"
